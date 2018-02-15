@@ -54,6 +54,11 @@ module.exports = {
         })
         return deferred.promise
     },
+    /**
+     * Listens to a specific collection in Firefbase
+     * @param  {string}   collection Name of collection
+     * @param  {Function} fn         Callback function
+     */
     listen: (collection, fn) => {
         log.info('Controller [database] Function [listen]')
         log.info(`Setting up Firebase Listener for [${collection}]`)
@@ -62,6 +67,12 @@ module.exports = {
             fn(snapshot)
         })
     },
+    /**
+     * Listens to a specific key in a collection in Firefbase
+     * @param  {string}   collection Name of collection
+     * @param  {string}   key        Name of collection child key
+     * @param  {Function} fn         Callback function
+     */
     listenChild: (collection, key, fn) => {
         log.info('Controller [database] Function [listenChild]')
         log.info(`Setting up Firebase Listener for [${collection}/${key}]`)
