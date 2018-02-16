@@ -14,6 +14,9 @@ module.exports = {
         temperature: {
             upperLimit: 38,
             lowerLimit: 36.4
+        },
+        movement: {
+            freefall: 1
         }
     }
 }

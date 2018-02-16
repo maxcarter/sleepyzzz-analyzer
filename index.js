@@ -20,6 +20,9 @@ ctrls.database.listen('devices', (snapshot) => {
         temperature: {
             high: [],
             low: []
+        },
+        movement: {
+            freefall: []
         }
     }
 
@@ -158,6 +161,68 @@ ctrls.database.listen('devices', (snapshot) => {
             .catch((error) => {
                 log.error(error)
                 anomaliesBuffer.temperature[type].pop()
+            })
+    }, {
+        limit: 1
+    })
+
+    ctrls.database.listen(`movement/${device.baby}`, (snap) => {
+        let data = snap.val()
+        if (disconnected) {
+            return
+        }
+        let anomaly = (data.fall >= config.anomalies.movement.freefall)
+
+        if (!anomaly) {
+            return
+        }
+
+        let type = 'freefall'
+        let now = Date.now()
+        let latestNotification = now
+        if (anomaliesBuffer.movement[type].length > 0) {
+            latestNotification = anomaliesBuffer.movement[type][0]
+        }
+
+        let timelapse = now - latestNotification
+        if (timelapse < config.buffer && timelapse != 0) {
+            return
+        }
+        anomaliesBuffer.movement[type].push(now)
+
+        ctrls.database.read('users', device.user)
+            .then((user) => {
+                let babyName = user.babies[device.baby]
+
+                let message = {
+                    title: `${babyName} has fallen!`,
+                    body: `${babyName} has fallen.`
+                }
+
+                let notifications = []
+                for (let k in user.mobileDevices) {
+                    notifications.push(ctrls.notifications.send(user.mobileDevices[k], message.title, message.body))
+                }
+                Promise.all(notifications)
+                    .then((results) => {
+                        setTimeout(() => {
+                            anomaliesBuffer.movement[type].pop()
+                        }, config.buffer)
+                    })
+                    .catch((error) => {
+                        log.error(error)
+                        anomaliesBuffer.movement[type].pop()
+                    })
+                ctrls.database.insert(`anomalies/${device.baby}/movement`, {
+                    timestamp: data.timestamp,
+                    message: message.title,
+                    details: message.body
+                })
+
+            })
+            .catch((error) => {
+                log.error(error)
+                anomaliesBuffer.movement[type].pop()
             })
     }, {
         limit: 1
