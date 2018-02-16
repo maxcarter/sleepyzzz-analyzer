@@ -55,30 +55,55 @@ module.exports = {
         return deferred.promise
     },
     /**
-     * Listens to a specific collection in Firefbase
-     * @param  {string}   collection Name of collection
-     * @param  {Function} fn         Callback function
+     * Gets last entry from database
+     * @param  {string} collection Name of Collection
+     * @param  {array} children   Array of child elements
+     * @return {Promise}          JavaScript Promise
      */
-    listen: (collection, fn) => {
-        log.info('Controller [database] Function [listen]')
-        log.info(`Setting up Firebase Listener for [${collection}]`)
-        ref.child(collection).on('child_added', (snapshot) => {
-            log.info(`Received [${collection}] event.`)
-            fn(snapshot)
+    getLast: (collection, children) => {
+        log.info('Controller [database] Function [getLast]')
+        log.info(`Reading Firebase [${collection}]`)
+
+        let deferred = q.defer()
+        let collectionRef = ref.child(collection)
+        for (let child in children) {
+            collectionRef = collectionRef.child(children[child])
+        }
+        collectionRef.orderByKey().limitToLast(1).once('child_added').then((snapshot) => {
+            log.info(`Successfully read data from Firebase [${collection}]`)
+            deferred.resolve(snapshot.val())
+        }).catch((error) => {
+            log.error(`Failed reading data from Firebase [${collection}]`, error)
+            deferred.reject(error)
         })
+        return deferred.promise
     },
     /**
-     * Listens to a specific key in a collection in Firefbase
+     * Listens to a specific collection in Firefbase
      * @param  {string}   collection Name of collection
-     * @param  {string}   key        Name of collection child key
-     * @param  {Function} fn         Callback function
+     * @param  {object}   options    Options
+     * @param  {Function} callback   JavaScript Callback function
      */
-    listenChild: (collection, key, fn) => {
-        log.info('Controller [database] Function [listenChild]')
-        log.info(`Setting up Firebase Listener for [${collection}/${key}]`)
-        ref.child(collection).child(key).orderByKey().limitToLast(1).on('child_added', (snapshot) => {
-            log.info(`Received [${collection}/${key}] event.`)
-            fn(snapshot)
+    listen: (collection, callback, options) => {
+        log.info('Controller [database] Function [listen]')
+        log.info(`Setting up Firebase Listener for [${collection}]`)
+        options = options || {}
+        let children = collection.split('/')
+        let collectionRef = ref
+        for (let i = 0; i < children.length; i++) {
+            collectionRef = collectionRef.child(children[i])
+        }
+        collectionRef = collectionRef.orderByKey()
+        if (options.limit && options.limit > 0) {
+            collectionRef = collectionRef.limitToLast(options.limit)
+        }
+        collectionRef.on('child_added', (snapshot) => {
+            log.info(`Received [${collection}] event.`)
+            callback(snapshot)
+        }, (error) => {
+            log.error(`Failed receiving [${collection}] event.`)
+            log.error(error)
+            deferred.reject(error)
         })
     }
 }
