@@ -7,9 +7,13 @@ module.exports = {
         node: "sleepyzzz-dev"
     },
     anomalies: {
-      heartrate: {
-        upperLimit: 160,
-        lowerLimit: 90
-      }
+        heartrate: {
+            upperLimit: 160,
+            lowerLimit: 90
+        },
+        temperature: {
+            upperLimit: 38,
+            lowerLimit: 36.4
+        }
     }
 }

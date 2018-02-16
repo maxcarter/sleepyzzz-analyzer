@@ -16,6 +16,10 @@ ctrls.database.listen('devices', (snapshot) => {
         heartrate: {
             fast: [],
             slow: []
+        },
+        temperature: {
+            high: [],
+            low: []
         }
     }
 
@@ -85,6 +89,75 @@ ctrls.database.listen('devices', (snapshot) => {
             .catch((error) => {
                 log.error(error)
                 anomaliesBuffer.heartrate[type].pop()
+            })
+    }, {
+        limit: 1
+    })
+
+    ctrls.database.listen(`temperature/${device.baby}`, (snap) => {
+        let data = snap.val()
+        if (disconnected) {
+            return
+        }
+        let anomaly =
+            data.temperature > config.anomalies.temperature.upperLimit ||
+            data.temperature < config.anomalies.temperature.lowerLimit
+
+        if (!anomaly) {
+            return
+        }
+
+        let type = ''
+        if (data.temperature > config.anomalies.temperature.upperLimit) {
+            type = 'high'
+        } else if (data.temperature < config.anomalies.temperature.lowerLimit) {
+            type = 'low'
+        }
+        let now = Date.now()
+        let latestNotification = now
+        if (anomaliesBuffer.temperature[type].length > 0) {
+            latestNotification = anomaliesBuffer.temperature[type][0]
+        }
+
+        let timelapse = now - latestNotification
+        if (timelapse < config.buffer && timelapse != 0) {
+            return
+        }
+        anomaliesBuffer.temperature[type].push(now)
+
+        ctrls.database.read('users', device.user)
+            .then((user) => {
+                let babyName = user.babies[device.baby]
+
+                let message = {
+                    title: `${babyName}'s body temperature is too ${type}!`,
+                    body: `${babyName}'s body temperature is currently: ${data.bpm} BPM.`
+                }
+
+                let notifications = []
+                for (let k in user.mobileDevices) {
+                    notifications.push(ctrls.notifications.send(user.mobileDevices[k], message.title, message.body))
+                }
+                Promise.all(notifications)
+                    .then((results) => {
+                        setTimeout(() => {
+                            anomaliesBuffer.temperature[type].pop()
+                        }, config.buffer)
+                    })
+                    .catch((error) => {
+                        log.error(error)
+                        anomaliesBuffer.temperature[type].pop()
+                    })
+                ctrls.database.insert(`anomalies/${device.baby}/temperature`, {
+                    timestamp: data.timestamp,
+                    message: message.title,
+                    details: message.body
+                })
+
+            })
+            .catch((error) => {
+                log.error(error)
+                anomaliesBuffer.temperature[type].pop()
             })
     }, {
         limit: 1
