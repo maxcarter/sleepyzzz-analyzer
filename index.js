@@ -144,14 +144,14 @@ ctrls.database.listen('devices', (snapshot) => {
 
                 let message = {
                     title: `${babyName}`,
-                    body: `Temperature is ${type}: ${data.temperature.toFixed(2)} ${degree} C`,
+                    body: `Temperature is ${type}: ${data.temperature.toFixed(2)}${degree}C`,
                     data: {
                         timestamp: `${data.timestamp}`,
                         baby: device.baby,
                         type: `temperature_${type}`,
                         value: `${data.temperature}`,
                         title: `${babyName}`,
-                        body: `Temperature is ${type}: ${data.temperature.toFixed(2)} ${degree} C`
+                        body: `Temperature is ${type}: ${data.temperature.toFixed(2)}${degree}C`
                     }
                 }
 
