@@ -48,13 +48,16 @@ ctrls.database.listen('devices', (snapshot) => {
             type = 'low'
         }
         let now = Date.now()
-        let latestNotification = now
-        if (anomaliesBuffer.heartrate[type].length > 0) {
-            latestNotification = anomaliesBuffer.heartrate[type][0]
+        for (let i = 0; i < anomaliesBuffer.heartrate[type].length; i++) {
+            let latestNotification = anomaliesBuffer.heartrate[type][i]
+            let timelapse = now - latestNotification
+            if (timelapse < config.buffer && timelapse > 0) {
+                return
+            }
+            anomaliesBuffer.heartrate[type].shift()
         }
 
-        let timelapse = now - latestNotification
-        if (timelapse < config.buffer && timelapse != 0) {
+        if (anomaliesBuffer.heartrate[type].length > 0) {
             return
         }
         anomaliesBuffer.heartrate[type].push(now)
@@ -87,19 +90,25 @@ ctrls.database.listen('devices', (snapshot) => {
                 Promise.all(notifications)
                     .then((results) => {
                         setTimeout(() => {
-                            anomaliesBuffer.heartrate[type].shfit()
+                            if (anomaliesBuffer.heartrate[type][0] === now) {
+                                anomaliesBuffer.heartrate[type].shift()
+                            }
                         }, config.buffer)
                     })
                     .catch((error) => {
                         log.error(error)
-                        anomaliesBuffer.heartrate[type].shfit()
+                        if (anomaliesBuffer.heartrate[type][0] === now) {
+                            anomaliesBuffer.heartrate[type].shift()
+                        }
                     })
                 ctrls.database.insert(`anomalies/${device.baby}/heartrate`, message.data)
 
             })
             .catch((error) => {
                 log.error(error)
-                anomaliesBuffer.heartrate[type].shfit()
+                if (anomaliesBuffer.heartrate[type][0] === now) {
+                    anomaliesBuffer.heartrate[type].shift()
+                }
             })
     }, {
         limit: 1
@@ -125,15 +134,19 @@ ctrls.database.listen('devices', (snapshot) => {
             type = 'low'
         }
         let now = Date.now()
-        let latestNotification = now
-        if (anomaliesBuffer.temperature[type].length > 0) {
-            latestNotification = anomaliesBuffer.temperature[type][0]
+        for (let i = 0; i < anomaliesBuffer.temperature[type].length; i++) {
+            let latestNotification = anomaliesBuffer.temperature[type][i]
+            let timelapse = now - latestNotification
+            if (timelapse < config.buffer && timelapse > 0) {
+                return
+            }
+            anomaliesBuffer.temperature[type].shift()
         }
 
-        let timelapse = now - latestNotification
-        if (timelapse < config.buffer && timelapse != 0) {
+        if (anomaliesBuffer.temperature[type].length > 0) {
             return
         }
+
         anomaliesBuffer.temperature[type].push(now)
 
         ctrls.database.read('users', device.user)
@@ -166,19 +179,25 @@ ctrls.database.listen('devices', (snapshot) => {
                 Promise.all(notifications)
                     .then((results) => {
                         setTimeout(() => {
-                            anomaliesBuffer.temperature[type].shfit()
+                            if (anomaliesBuffer.temperature[type][0] === now) {
+                                anomaliesBuffer.temperature[type].shift()
+                            }
                         }, config.buffer)
                     })
                     .catch((error) => {
                         log.error(error)
-                        anomaliesBuffer.temperature[type].shfit()
+                        if (anomaliesBuffer.temperature[type][0] === now) {
+                            anomaliesBuffer.temperature[type].shift()
+                        }
                     })
                 ctrls.database.insert(`anomalies/${device.baby}/temperature`, message.data)
 
             })
             .catch((error) => {
                 log.error(error)
-                anomaliesBuffer.temperature[type].shfit()
+                if (anomaliesBuffer.temperature[type][0] === now) {
+                    anomaliesBuffer.temperature[type].shift()
+                }
             })
     }, {
         limit: 1
@@ -197,15 +216,19 @@ ctrls.database.listen('devices', (snapshot) => {
 
         let type = 'fall'
         let now = Date.now()
-        let latestNotification = now
-        if (anomaliesBuffer.movement[type].length > 0) {
-            latestNotification = anomaliesBuffer.movement[type][0]
+        for (let i = 0; i < anomaliesBuffer.movement[type].length; i++) {
+            let latestNotification = anomaliesBuffer.movement[type][i]
+            let timelapse = now - latestNotification
+            if (timelapse < config.buffer && timelapse > 0) {
+                return
+            }
+            anomaliesBuffer.movement[type].shift()
         }
 
-        let timelapse = now - latestNotification
-        if (timelapse < config.buffer && timelapse != 0) {
+        if (anomaliesBuffer.movement[type].length > 0) {
             return
         }
+
         anomaliesBuffer.movement[type].push(now)
 
         ctrls.database.read('users', device.user)
@@ -236,19 +259,26 @@ ctrls.database.listen('devices', (snapshot) => {
                 Promise.all(notifications)
                     .then((results) => {
                         setTimeout(() => {
-                            anomaliesBuffer.movement[type].shift()
+                            if (anomaliesBuffer.movement[type][0] === now) {
+                                anomaliesBuffer.movement[type].shift()
+                            }
+
                         }, config.buffer)
                     })
                     .catch((error) => {
                         log.error(error)
-                        anomaliesBuffer.movement[type].shift()
+                        if (anomaliesBuffer.movement[type][0] === now) {
+                            anomaliesBuffer.movement[type].shift()
+                        }
                     })
                 ctrls.database.insert(`anomalies/${device.baby}/movement`, message.data)
 
             })
             .catch((error) => {
                 log.error(error)
-                anomaliesBuffer.movement[type].shift()
+                if (anomaliesBuffer.movement[type][0] === now) {
+                    anomaliesBuffer.movement[type].shift()
+                }
             })
     }, {
         limit: 1
