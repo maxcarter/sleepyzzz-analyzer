@@ -75,7 +75,8 @@ ctrls.database.listen('devices', (snapshot) => {
                         type: `heartrate_${type}`,
                         value: `${data.bpm}`,
                         title: `${babyName}`,
-                        body: `Heartrate is ${type}: ${data.bpm.toFixed(2)} BPM`
+                        body: `Heartrate is ${type}: ${data.bpm.toFixed(2)} BPM`,
+                        message: `Heartrate was ${type}: ${data.bpm.toFixed(2)} BPM`
                     }
                 }
 
@@ -164,7 +165,8 @@ ctrls.database.listen('devices', (snapshot) => {
                         type: `temperature_${type}`,
                         value: `${data.temperature}`,
                         title: `${babyName}`,
-                        body: `Temperature is ${type}: ${data.temperature.toFixed(2)}${degree}C`
+                        body: `Temperature is ${type}: ${data.temperature.toFixed(2)}${degree}C`,
+                        message: `Temperature was ${type}: ${data.temperature.toFixed(2)}${degree}C`
                     }
                 }
 
@@ -244,7 +246,8 @@ ctrls.database.listen('devices', (snapshot) => {
                         type: `movement_${type}`,
                         value: `${data.fall}`,
                         title: `${babyName}`,
-                        body: `Has fallen`
+                        body: `Has fallen`,
+                        message: `fell`
                     }
                 }
 
