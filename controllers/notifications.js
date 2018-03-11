@@ -13,7 +13,7 @@ module.exports = {
      * @param  {string} body  Notification Body
      * @return {Promise}      JavaScript Promise
      */
-    send: (id, title, body) => {
+    send: (id, title, body, data) => {
         log.info('Controller [notifications] Function [send]')
 
         let message = {
@@ -21,7 +21,8 @@ module.exports = {
             notification: {
                 title: title,
                 body: body
-            }
+            },
+            data: data || {}
         }
 
         log.info(`Sending notification to [${id}]`)

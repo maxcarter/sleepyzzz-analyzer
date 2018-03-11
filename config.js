@@ -16,7 +16,7 @@ module.exports = {
             lowerLimit: 36.4
         },
         movement: {
-            freefall: 1
+            fall: 1
         }
     }
 }

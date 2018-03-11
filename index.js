@@ -14,15 +14,15 @@ ctrls.database.listen('devices', (snapshot) => {
     let disconnected = false
     let anomaliesBuffer = {
         heartrate: {
-            fast: [],
-            slow: []
+            high: [],
+            low: []
         },
         temperature: {
             high: [],
             low: []
         },
         movement: {
-            freefall: []
+            fall: []
         }
     }
 
@@ -43,9 +43,9 @@ ctrls.database.listen('devices', (snapshot) => {
 
         let type = ''
         if (data.bpm > config.anomalies.heartrate.upperLimit) {
-            type = 'fast'
+            type = 'high'
         } else if (data.bpm < config.anomalies.heartrate.lowerLimit) {
-            type = 'slow'
+            type = 'low'
         }
         let now = Date.now()
         let latestNotification = now
@@ -64,34 +64,42 @@ ctrls.database.listen('devices', (snapshot) => {
                 let babyName = user.babies[device.baby]
 
                 let message = {
-                    title: `${babyName}'s heartrate is too ${type}!`,
-                    body: `${babyName}'s heartrate is currently: ${data.bpm} BPM.`
+                    title: `${babyName}`,
+                    body: `Heart Rate is ${type}: ${data.bpm.toFixed(2)} BPM`,
+                    data: {
+                        timestamp: `${data.timestamp}`,
+                        baby: device.baby,
+                        type: `heartrate_${type}`,
+                        value: `${data.bpm}`,
+                        title: `${babyName}`,
+                        body: `Heartrate is ${type}: ${data.bpm.toFixed(2)} BPM`
+                    }
                 }
 
                 let notifications = []
                 for (let k in user.mobileDevices) {
-                    notifications.push(ctrls.notifications.send(user.mobileDevices[k], message.title, message.body))
+                    notifications.push(ctrls.notifications.send(
+                        user.mobileDevices[k],
+                        message.title,
+                        message.body,
+                        message.data))
                 }
                 Promise.all(notifications)
                     .then((results) => {
                         setTimeout(() => {
-                            anomaliesBuffer.heartrate[type].pop()
+                            anomaliesBuffer.heartrate[type].shfit()
                         }, config.buffer)
                     })
                     .catch((error) => {
                         log.error(error)
-                        anomaliesBuffer.heartrate[type].pop()
+                        anomaliesBuffer.heartrate[type].shfit()
                     })
-                ctrls.database.insert(`anomalies/${device.baby}/heartrate`, {
-                    timestamp: data.timestamp,
-                    message: message.title,
-                    details: message.body
-                })
+                ctrls.database.insert(`anomalies/${device.baby}/heartrate`, message.data)
 
             })
             .catch((error) => {
                 log.error(error)
-                anomaliesBuffer.heartrate[type].pop()
+                anomaliesBuffer.heartrate[type].shfit()
             })
     }, {
         limit: 1
@@ -132,35 +140,45 @@ ctrls.database.listen('devices', (snapshot) => {
             .then((user) => {
                 let babyName = user.babies[device.baby]
 
+                let degree = String.fromCharCode(176)
+
                 let message = {
-                    title: `${babyName}'s body temperature is too ${type}!`,
-                    body: `${babyName}'s body temperature is currently: ${data.bpm} BPM.`
+                    title: `${babyName}`,
+                    body: `Temperature is ${type}: ${data.temperature.toFixed(2)} ${degree} C`,
+                    data: {
+                        timestamp: `${data.timestamp}`,
+                        baby: device.baby,
+                        type: `temperature_${type}`,
+                        value: `${data.temperature}`,
+                        title: `${babyName}`,
+                        body: `Temperature is ${type}: ${data.temperature.toFixed(2)} ${degree} C`
+                    }
                 }
 
                 let notifications = []
                 for (let k in user.mobileDevices) {
-                    notifications.push(ctrls.notifications.send(user.mobileDevices[k], message.title, message.body))
+                    notifications.push(ctrls.notifications.send(
+                        user.mobileDevices[k],
+                        message.title,
+                        message.body,
+                        message.data))
                 }
                 Promise.all(notifications)
                     .then((results) => {
                         setTimeout(() => {
-                            anomaliesBuffer.temperature[type].pop()
+                            anomaliesBuffer.temperature[type].shfit()
                         }, config.buffer)
                     })
                     .catch((error) => {
                         log.error(error)
-                        anomaliesBuffer.temperature[type].pop()
+                        anomaliesBuffer.temperature[type].shfit()
                     })
-                ctrls.database.insert(`anomalies/${device.baby}/temperature`, {
-                    timestamp: data.timestamp,
-                    message: message.title,
-                    details: message.body
-                })
+                ctrls.database.insert(`anomalies/${device.baby}/temperature`, message.data)
 
             })
             .catch((error) => {
                 log.error(error)
-                anomaliesBuffer.temperature[type].pop()
+                anomaliesBuffer.temperature[type].shfit()
             })
     }, {
         limit: 1
@@ -171,13 +189,13 @@ ctrls.database.listen('devices', (snapshot) => {
         if (disconnected) {
             return
         }
-        let anomaly = (data.fall >= config.anomalies.movement.freefall)
+        let anomaly = (data.fall >= config.anomalies.movement.fall)
 
         if (!anomaly) {
             return
         }
 
-        let type = 'freefall'
+        let type = 'fall'
         let now = Date.now()
         let latestNotification = now
         if (anomaliesBuffer.movement[type].length > 0) {
@@ -195,34 +213,42 @@ ctrls.database.listen('devices', (snapshot) => {
                 let babyName = user.babies[device.baby]
 
                 let message = {
-                    title: `${babyName} has fallen!`,
-                    body: `${babyName} has fallen.`
+                    title: `${babyName}`,
+                    body: `Has fallen!`,
+                    data: {
+                        timestamp: `${data.timestamp}`,
+                        baby: device.baby,
+                        type: `movement_${type}`,
+                        value: `${data.fall}`,
+                        title: `${babyName}`,
+                        body: `Has fallen`
+                    }
                 }
 
                 let notifications = []
                 for (let k in user.mobileDevices) {
-                    notifications.push(ctrls.notifications.send(user.mobileDevices[k], message.title, message.body))
+                    notifications.push(ctrls.notifications.send(
+                        user.mobileDevices[k],
+                        message.title,
+                        message.body,
+                        message.data))
                 }
                 Promise.all(notifications)
                     .then((results) => {
                         setTimeout(() => {
-                            anomaliesBuffer.movement[type].pop()
+                            anomaliesBuffer.movement[type].shift()
                         }, config.buffer)
                     })
                     .catch((error) => {
                         log.error(error)
-                        anomaliesBuffer.movement[type].pop()
+                        anomaliesBuffer.movement[type].shift()
                     })
-                ctrls.database.insert(`anomalies/${device.baby}/movement`, {
-                    timestamp: data.timestamp,
-                    message: message.title,
-                    details: message.body
-                })
+                ctrls.database.insert(`anomalies/${device.baby}/movement`, message.data)
 
             })
             .catch((error) => {
                 log.error(error)
-                anomaliesBuffer.movement[type].pop()
+                anomaliesBuffer.movement[type].shift()
             })
     }, {
         limit: 1
