@@ -3,11 +3,16 @@ var config = require('../config')
 var ctrls = require('../controllers')
 
 module.exports = (device, configuration) => {
+    let firstRun = true
     let anomalyBuffer = {
         high: [],
         low: []
     }
     ctrls.database.listen(`heartrate/${device.baby}`, (snap) => {
+        if (firstRun) {
+          firstRun = false
+          return
+        }
         let data = snap.val()
         if (data.bpm <= 0) {
             configuration.disconnected = true

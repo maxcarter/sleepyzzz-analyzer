@@ -3,10 +3,15 @@ var config = require('../config')
 var ctrls = require('../controllers')
 
 module.exports = (device, configuration) => {
+    let firstRun = true
     let anomalyBuffer = {
         fall: []
     }
     ctrls.database.listen(`movement/${device.baby}`, (snap) => {
+        if (firstRun) {
+            firstRun = false
+            return
+        }
         let data = snap.val()
         if (configuration.disconnected) {
             return

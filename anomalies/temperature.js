@@ -3,11 +3,16 @@ var config = require('../config')
 var ctrls = require('../controllers')
 
 module.exports = (device, configuration) => {
+    let firstRun = true
     let anomalyBuffer = {
         high: [],
         low: []
     }
     ctrls.database.listen(`temperature/${device.baby}`, (snap) => {
+        if (firstRun) {
+            firstRun = false
+            return
+        }
         let data = snap.val()
         if (configuration.disconnected) {
             return
