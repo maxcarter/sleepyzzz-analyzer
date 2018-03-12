@@ -16,7 +16,15 @@ module.exports = {
             lowerLimit: 36.4
         },
         movement: {
-            fall: 1
+            fall: 1,
+            roll: {
+                upperLimit: 45,
+                lowerLimit: -45
+            },
+            pitch: {
+                upperLimit: 45,
+                lowerLimit: -45
+            }
         }
     }
 }

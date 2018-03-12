@@ -5,7 +5,8 @@ var ctrls = require('../controllers')
 module.exports = (device, configuration) => {
     let firstRun = true
     let anomalyBuffer = {
-        fall: []
+        fall: [],
+        rollover: []
     }
     ctrls.database.listen(`movement/${device.baby}`, (snap) => {
         if (firstRun) {
@@ -16,13 +17,22 @@ module.exports = (device, configuration) => {
         if (configuration.disconnected) {
             return
         }
-        let anomaly = (data.fall >= config.anomalies.movement.fall)
+
+        let roll = Math.atan2(data.y, data.z) * 180 / Math.PI
+        let pitch = Math.atan2(-data.x, Math.sqrt(data.y * data.y + data.z * data.z)) * 180 / Math.PI
+
+        let anomaly =
+            data.fall >= config.anomalies.movement.fall ||
+            roll <= config.anomalies.movement.roll.lowerLimit ||
+            roll >= config.anomalies.movement.roll.upperLimit ||
+            pitch <= config.anomalies.movement.pitch.lowerLimit ||
+            pitch >= config.anomalies.movement.pitch.upperLimit
 
         if (!anomaly) {
             return
         }
 
-        let type = 'fall'
+        let type = (data.fall >= config.anomalies.movement.fall) ? 'fall' : 'rollover'
         let now = Date.now()
         for (let i = 0; i < anomalyBuffer[type].length; i++) {
             let latestNotification = anomalyBuffer[type][i]
@@ -43,17 +53,20 @@ module.exports = (device, configuration) => {
             .then((user) => {
                 let babyName = user.babies[device.baby]
 
+                let text = (data.fall >= config.anomalies.movement.fall) ? 'fallen' : 'rolled over'
+                let pastText = (data.fall >= config.anomalies.movement.fall) ? 'Fell' : 'Rolled over'
+
                 let message = {
                     title: `${babyName}`,
-                    body: `Has fallen!`,
+                    body: `Has ${text}!`,
                     data: {
                         timestamp: `${data.timestamp}`,
                         baby: device.baby,
                         type: `movement_${type}`,
-                        value: `${data.fall}`,
+                        value: `true`,
                         title: `${babyName}`,
-                        body: `Has fallen`,
-                        message: `fell`
+                        body: `Has ${text}!`,
+                        message: `${pastText}`
                     }
                 }
 
