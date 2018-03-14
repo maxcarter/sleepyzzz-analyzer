@@ -14,7 +14,7 @@ module.exports = (device, configuration) => {
           return
         }
         let data = snap.val()
-        if (data.bpm <= 0) {
+        if (data.bpm <= config.anomalies.heartrate.min) {
             configuration.disconnected = true
             return
         }

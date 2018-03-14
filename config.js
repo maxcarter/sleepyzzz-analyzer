@@ -8,6 +8,7 @@ module.exports = {
     },
     anomalies: {
         heartrate: {
+            min: 10,
             upperLimit: 160,
             lowerLimit: 90
         },
