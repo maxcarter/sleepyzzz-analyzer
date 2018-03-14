@@ -6,6 +6,7 @@ module.exports = {
         serviceAccount: "../svc-sleepyzzz.json",
         node: "sleepyzzz-dev"
     },
+    timeout: 15000,
     anomalies: {
         heartrate: {
             min: 10,

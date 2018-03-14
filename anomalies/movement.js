@@ -14,9 +14,10 @@ module.exports = (device, configuration) => {
             return
         }
         let data = snap.val()
-        if (configuration.disconnected) {
+        if (!configuration.connected) {
             return
         }
+        configuration.lastEvent = Date.now()
 
         let roll = Math.atan2(data.y, data.z) * 180 / Math.PI
         let pitch = Math.atan2(-data.x, Math.sqrt(data.y * data.y + data.z * data.z)) * 180 / Math.PI

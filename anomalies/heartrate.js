@@ -10,15 +10,16 @@ module.exports = (device, configuration) => {
     }
     ctrls.database.listen(`heartrate/${device.baby}`, (snap) => {
         if (firstRun) {
-          firstRun = false
-          return
+            firstRun = false
+            return
         }
         let data = snap.val()
         if (data.bpm <= config.anomalies.heartrate.min) {
-            configuration.disconnected = true
+            configuration.disconnectDevice()
             return
         }
-        configuration.disconnected = false
+        configuration.lastEvent = Date.now()
+        configuration.connectDevice()
         let anomaly =
             data.bpm > config.anomalies.heartrate.upperLimit ||
             data.bpm < config.anomalies.heartrate.lowerLimit

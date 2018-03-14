@@ -14,9 +14,10 @@ module.exports = (device, configuration) => {
             return
         }
         let data = snap.val()
-        if (configuration.disconnected) {
+        if (!configuration.connected) {
             return
         }
+        configuration.lastEvent = Date.now()
         let anomaly =
             data.temperature > config.anomalies.temperature.upperLimit ||
             data.temperature < config.anomalies.temperature.lowerLimit
